@@ -6,27 +6,27 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	</head>
 	<body>
-		<table>
-			<tr>
-				<td>Width:</td>
-				<td><input type="number" id="width" value="8"></td>
-			</tr>
-			<tr>
-				<td>Height:</td>
-				<td><input type="number" id="height" value="5"></td>
-			</tr>
-			<tr>
-				<td>Mines:</td>
-				<td><input type="number" id="mines" value="5"></td>
-			</tr>
-			<tr>
-				<td></td>
-				<td><button id="start">Start</button></td>
-			</tr>
-		</table><br>
-		
-		
-		<div id="gameboard"></div>
+		<center>
+			<table>
+				<tr>
+					<td>Width:</td>
+					<td><input type="number" id="width" value="8"></td>
+				</tr>
+				<tr>
+					<td>Height:</td>
+					<td><input type="number" id="height" value="5"></td>
+				</tr>
+				<tr>
+					<td>Mines:</td>
+					<td><input type="number" id="mines" value="5"></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><button id="start">Start</button></td>
+				</tr>
+			</table><br>
+			<div id="gameboard" style="text-align:center; margin:0 auto; display:inline-block;"></div>
+		</center>
 		<script src="minesweeper.js"></script>
 		<script>
 			document.getElementById("start").onclick = function(){
@@ -95,7 +95,10 @@
 					clearInterval(int);
 				};
 				
-				
+				ms.onMineMarkerChange = function(totalMines){ console.log("ybubts");
+					while(mines_span.firstChild) mines_span.removeChild(mines_span.firstChild);
+					mines_span.appendChild(document.createTextNode(totalMines));
+				};
 				
 				gameboard.appendChild(ms.getGame());
 			};

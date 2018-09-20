@@ -7,8 +7,10 @@ class ms_grid{
 		this.won = false;
 		this.onFirstClick = ()=>{};
 		this.onGameFinished = ()=>{};
+		this.onMineMarkerChange = ()=>{};
 		this.width = w;
 		this.height = h;
+		this.minesMarked = 0;
 		this.grid = [];
 		this.total_cleared = 0;
 		if(w*h <= mines) throw new Error("Too many mines.");
@@ -29,6 +31,9 @@ class ms_grid{
 				td.setAttribute('data-mine', block.isMine?"1":"0");
 				td.setAttribute('data-clicked', "0");
 				td.setAttribute('data-flagged', "0");
+				td.setAttribute('data-x', x);
+				td.setAttribute('data-y', y);
+				td.setAttribute('id', 'ms-cell-'+x+'-'+y);
 				tr.appendChild(td);
 				td.onclick = ()=>this.onTDClick(td);
 				td.addEventListener('contextmenu', (ev)=>{
@@ -45,13 +50,17 @@ class ms_grid{
 			this.started = true;
 			this.onFirstClick();
 		}
+		if(td.getAttribute('data-clicked') == '1') return;
 		if(td.getAttribute('data-flagged') == '1'){
 			td.setAttribute('data-flagged', '0');
 			while(td.firstChild) td.removeChild(td.firstChild);
+			this.minesMarked--;
 		}else{
 			td.setAttribute('data-flagged', '1');
 			td.appendChild(document.createTextNode('⊗'));
+			this.minesMarked++;
 		}
+		this.onMineMarkerChange(this.minesMarked);
 	}
 	onTDClick(td){
 		if(this.gameover) return;
@@ -60,6 +69,8 @@ class ms_grid{
 			this.onFirstClick();
 		}
 		if(td.getAttribute('data-clicked') == '1') return;
+		while(td.firstChild) td.removeChild(td.firstChild);
+		td.setAttribute('data-clicked', '1');
 		td.style.background = "white";
 		if(td.getAttribute('data-mine') == '1'){
 			td.appendChild(document.createTextNode('✶'));
@@ -77,11 +88,19 @@ class ms_grid{
 				case '7': span.setAttribute('style', 'color:#f4b541'); break;
 				case '8': span.setAttribute('style', 'color:#f44141'); break;
 			}
-			span.appendChild(document.createTextNode(td.getAttribute('data-touching')));
 			td.appendChild(span);
-			this.total_cleared++
-		}else{
+			span.appendChild(document.createTextNode(td.getAttribute('data-touching')));
 			this.total_cleared++;
+		}else{
+			var touching_empty_blocks = this.touching_empty_blocks(
+				parseInt(td.getAttribute('data-x')), 
+				parseInt(td.getAttribute('data-y'))
+			).forEach(c=>{
+				c = JSON.parse(c);
+				var td = document.getElementById('ms-cell-'+c[0]+'-'+c[1]);
+				this.total_cleared++;
+				td.style.background = "white";
+			});
 		}
 		var blocks = (this.width * this.height) - this.mines;
 		if(this.total_cleared == blocks){
@@ -89,6 +108,31 @@ class ms_grid{
 			this.won = true;
 			this.onGameFinished();
 		}
+	}
+	touching_empty_blocks(x, y, blocks=[]){
+		if(!~blocks.indexOf(JSON.stringify([x, y]))) blocks.push(JSON.stringify([x,y]));
+		this.touching_blocks(x,y).forEach(b=>{
+			var xx,yy;
+			[xx, yy] = b;
+			var block = this.grid[yy][xx];
+			if(block.isMine) return;
+			if(block.touching != 0) return;
+			if(~blocks.indexOf(JSON.stringify([xx, yy]))) return;
+			blocks = this.touching_empty_blocks(xx, yy, blocks);
+		});
+		return blocks;
+	}
+	touching_blocks(x, y){
+		var blocks = [];
+		if(this.grid[y-1] && this.grid[y-1][x-1]) blocks.push([x-1, y-1]);
+		if(this.grid[y-1] && this.grid[y-1][x]) blocks.push([x, y-1]);
+		if(this.grid[y-1] && this.grid[y-1][x+1]) blocks.push([x+1, y-1]);
+		if(this.grid[y] && this.grid[y][x-1]) blocks.push([x-1, y]);
+		if(this.grid[y] && this.grid[y][x+1]) blocks.push([x+1, y]);
+		if(this.grid[y+1] && this.grid[y+1][x-1]) blocks.push([x-1, y+1]);
+		if(this.grid[y+1] && this.grid[y+1][x]) blocks.push([x, y+1]);
+		if(this.grid[y+1] && this.grid[y+1][x+1]) blocks.push([x+1, y+1]);
+		return blocks;
 	}
 	populate_grid(){
 		// Create the grid
