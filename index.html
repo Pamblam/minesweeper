@@ -30,6 +30,11 @@
 		<script src="minesweeper.js"></script>
 		<script>
 			document.getElementById("start").onclick = function(){
+				var oldGameResult = document.querySelector('#gameResultMessage');
+				if (oldGameResult) {
+					oldGameResult.parentNode.removeChild(oldGameResult);
+				}
+
 				var width = parseInt(document.getElementById("width").value);
 				var height = parseInt(document.getElementById("height").value);
 				var mines = parseInt(document.getElementById("mines").value);
