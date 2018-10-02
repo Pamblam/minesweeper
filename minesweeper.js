@@ -75,6 +75,7 @@ class ms_grid{
 		if(td.getAttribute('data-mine') == '1'){
 			td.appendChild(document.createTextNode('✶'));
 			this.gameover = true;
+			this.appendGameResultMessage(false);
 			return this.onGameFinished();
 		}else if(td.getAttribute('data-touching') != '0'){
 			var span = document.createElement('span');
@@ -106,6 +107,7 @@ class ms_grid{
 		if(this.total_cleared == blocks){
 			this.gameover = true;
 			this.won = true;
+			this.appendGameResultMessage(true);
 			this.onGameFinished();
 		}
 	}
@@ -170,6 +172,14 @@ class ms_grid{
 		var x = Math.floor(Math.random()*this.width);
 		var y = Math.floor(Math.random()*this.height);
 		return this.grid[y][x];
+	}
+	appendGameResultMessage(isWon) {
+		var gameResultMessageNode = document.createElement('h1');
+		gameResultMessageNode.setAttribute('style', isWon ? 'color:#41f46d' : 'color:#f44141');
+		gameResultMessageNode.setAttribute('id', 'gameResultMessage');
+		gameResultMessageNode.innerText = isWon ? 'Congratulations! You won!' : 'Game over';
+
+		document.querySelector('center').appendChild(gameResultMessageNode);
 	}
 }
 
