@@ -6,107 +6,11 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	</head>
 	<body>
-		<center>
-			<table>
-				<tr>
-					<td>Width:</td>
-					<td><input type="number" id="width" value="8"></td>
-				</tr>
-				<tr>
-					<td>Height:</td>
-					<td><input type="number" id="height" value="5"></td>
-				</tr>
-				<tr>
-					<td>Mines:</td>
-					<td><input type="number" id="mines" value="5"></td>
-				</tr>
-				<tr>
-					<td></td>
-					<td><button id="start">Start</button></td>
-				</tr>
-			</table><br>
-			<div id="gameboard" style="text-align:center; margin:0 auto; display:inline-block;"></div>
-		</center>
+		<canvas id="gameboard"></canvas>
 		<script src="minesweeper.js"></script>
 		<script>
-			document.getElementById("start").onclick = function(){
-				var oldGameResult = document.querySelector('#gameResultMessage');
-				if (oldGameResult) {
-					oldGameResult.parentNode.removeChild(oldGameResult);
-				}
-
-				var width = parseInt(document.getElementById("width").value);
-				var height = parseInt(document.getElementById("height").value);
-				var mines = parseInt(document.getElementById("mines").value);
-				if(isNaN(width) || isNaN(height) || isNaN(mines)) return alert("Width, Height, and Mines must be numbers.");
-				var total = width*height;
-				var max_mines = parseInt((total / 100) * 95);
-				if(mines > max_mines){
-					alert("This size grid can only have a maximum of "+max_mines+" mines.");
-					document.getElementById("mines").value = max_mines;
-					mines = max_mines;
-				}
-				var difficulty = (mines / total) * 100;
-				difficulty = parseInt((difficulty / 95) * 100);
-				
-				var gameboard = document.getElementById('gameboard');
-				while(gameboard.firstChild) gameboard.removeChild(gameboard.firstChild);
-				
-				var diff = document.createElement("div");
-				var b = document.createElement("b");
-				var label = document.createTextNode("Difficulty: ");
-				b.appendChild(label);
-				diff.appendChild(b);
-				var d = document.createTextNode(difficulty+"%");
-				diff.appendChild(d);
-				gameboard.appendChild(diff);
-				
-				var mines_div = document.createElement("div");
-				var b = document.createElement("b");
-				var mines_span = document.createElement("span");
-				var label = document.createTextNode("Mines Found: ");
-				var mines_text = document.createTextNode("0");
-				b.appendChild(label);
-				mines_span.appendChild(mines_text);
-				mines_div.appendChild(b);
-				mines_div.appendChild(mines_span);
-				gameboard.appendChild(mines_div);
-				
-				var timer_div = document.createElement("div");
-				var b = document.createElement("b");
-				var timer_span = document.createElement("span");
-				var label = document.createTextNode("Time: ");
-				var timer_text = document.createTextNode("0");
-				b.appendChild(label);
-				timer_span.appendChild(timer_text);
-				timer_div.appendChild(b);
-				timer_div.appendChild(timer_span);
-				gameboard.appendChild(timer_div);
-				
-				var ms = new ms_grid(width,height,mines);
-				
-				var time = 0, int;
-				ms.onFirstClick = function(){
-					int = setInterval(()=>{
-						time++;
-						while(timer_span.firstChild) timer_span.removeChild(timer_span.firstChild);
-						timer_span.appendChild(document.createTextNode(time));
-					}, 1000);
-				};
-				
-				ms.onGameFinished = function(){
-					if(ms.won) alert("You won in "+time+" seconds!");
-					else alert("You lose.");
-					clearInterval(int);
-				};
-				
-				ms.onMineMarkerChange = function(totalMines){ console.log("ybubts");
-					while(mines_span.firstChild) mines_span.removeChild(mines_span.firstChild);
-					mines_span.appendChild(document.createTextNode(totalMines));
-				};
-				
-				gameboard.appendChild(ms.getGame());
-			};
+			var canvas = document.getElementById('gameboard');
+			var ms = new Minesweeper(canvas, 10, 7, 5);
 		</script>
 	</body>
 </html>
