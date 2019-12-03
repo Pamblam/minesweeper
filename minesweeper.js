@@ -1,7 +1,7 @@
 
 class Minesweeper{
 	
-	constructor(canvas, width, height, mine_count, path='./icons'){
+	constructor(canvas, width, height, mine_count, icons_path='./icons'){
 		this.canvas = canvas;
 		this.ctx = canvas.getContext('2d');
 		this.mine_count = +mine_count;
@@ -16,7 +16,6 @@ class Minesweeper{
 		this.emoji = 'neutral';
 		this.isTouchGame = false;
 		
-		this.icons_path = path;
 		this.lastMousePos = null;
 		this.move_over_cell = null;
 		this.mouse_down_time = null;
@@ -32,7 +31,7 @@ class Minesweeper{
 		
 		(async ()=>{
 			this._touchFixes();
-			await MinesweeperBlock.loadImages(this.icons_path);
+			await MinesweeperBlock.loadImages(icons_path);
 			this._populateGrid();
 			this._UILoop();
 		})();
@@ -415,7 +414,7 @@ class MinesweeperBlock{
 
 MinesweeperBlock.Images = null;
 
-MinesweeperBlock.loadImages = async function(){
+MinesweeperBlock.loadImages = async function(icons_path){
 	if(MinesweeperBlock.Images) return;
 	MinesweeperBlock.Images = {};
 	var imgs = [
@@ -429,7 +428,10 @@ MinesweeperBlock.loadImages = async function(){
 			MinesweeperBlock.Images[img] = image;
 			done();
 		};
-		image.src = `icons/${img}.png`;
+		image.onerror = ()=>{
+			throw new Error("Icon ("+img+") not found in provided path.");
+		}
+		image.src = `${icons_path}/${img}.png`;
 	}));
 	await Promise.all(promises);
 };
