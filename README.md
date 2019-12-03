@@ -1,6 +1,6 @@
 # Minesweeper
 
-Minesweeper on canvas.
+Minesweeper on canvas. Mobile (touch) friendly!
 
 # Usage
 
@@ -17,6 +17,15 @@ Minesweeper on canvas.
 <script>
 	var canvas = document.getElementById('gameboard');
 	var ms = new Minesweeper(canvas, 10, 7, 5);
+
+	canvas.addEventListener('ms-game-end', function(e){
+		var ms = e.detail;
+		var status = ms.won ? "won" : "lost";
+		var mines = ms.mine_count;
+		var time = ms.getGameTime();
+		var restart = confirm(`You ${status} this ${mines}-mine game in ${time}. Would you like to play again?`);
+		if(restart) ms.resetGame();
+	});
 </script>
 ```
 

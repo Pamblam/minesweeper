@@ -14,17 +14,23 @@ class Minesweeper{
 		this.won = false;
 		this.grid = [];
 		this.emoji = 'neutral';
+		this.isTouchGame = false;
 		
+		this.lastMousePos = null;
 		this.move_over_cell = null;
 		this.mouse_down_time = null;
 		canvas.addEventListener('mousedown', this._onmousedown.bind(this));
+		canvas.addEventListener('touchstart', this._onmousedown.bind(this));
 		canvas.addEventListener('mouseup', this._onmouseup.bind(this));
+		canvas.addEventListener('touchend', this._onmouseup.bind(this));
+		canvas.addEventListener('touchend', this._getClientPos.bind(this));
 		
 		if(!Minesweeper.isValidConfig(width, height, mine_count)){
 			throw new Error("Mines can only occupy 95% of the cells and the board must be at least 8 cells wide.");
 		}
 		
 		(async ()=>{
+			this._touchFixes();
 			await MinesweeperBlock.loadImages();
 			this._populateGrid();
 			this._UILoop();
@@ -32,14 +38,7 @@ class Minesweeper{
 		
 	}
 	
-	_UILoop(){
-		requestAnimationFrame(()=>{
-			this._draw();
-			this._UILoop();
-		});
-	}
-	
-	_resetGame(){
+	resetGame(){
 		this.won = false;
 		this.gameover = false;
 		this.end_time = null;
@@ -52,6 +51,62 @@ class Minesweeper{
 		this._populateGrid();
 	}
 	
+	getGameTime(){
+		var end_time = this.end_time || new Date().getTime();
+		var seconds = this.start_time ? 
+			Math.floor(end_time-this.start_time) : 
+			99999999;
+		seconds = Math.floor(seconds/1000);
+		var minutes = Math.floor(seconds / 60);
+		seconds -= minutes * 60;
+		seconds = (''+seconds).padStart(2, '0');
+		minutes = (''+minutes).padStart(2, '0');
+		if(minutes.length > 2){
+			minutes = '99';
+			seconds = '99';
+		}
+		return [...minutes, ':', ...seconds].join('');
+	}
+	
+	_touchFixes(){
+		this.canvas.style['-webkit-touch-callout'] = 'none';
+		this.canvas.style['-webkit-user-select'] = 'none';
+		this.canvas.style['-khtml-user-select'] = 'none';
+		this.canvas.style['-moz-user-select'] = 'none';
+		this.canvas.style['-ms-user-select'] = 'none';
+		this.canvas.style['user-select'] = 'none';
+		this.canvas.addEventListener('contextmenu', e=>e.preventDefault());
+	}
+	
+	_UILoop(){
+		requestAnimationFrame(()=>{
+			this._draw();
+			this._UILoop();
+		});
+	}
+	
+	_getClientPos(e){
+		var pos = {clientX: 0, clientY: 0};
+		if(e.type.indexOf('touch') === 0){
+			this.isTouchGame = true;
+			if(e.touches.length){
+				for(var i=e.touches.length; i--;){
+					pos.clientX += e.touches.item(i).clientX;
+					pos.clientY += e.touches.item(i).clientY;
+				}
+				pos.clientX /= e.touches.length;
+				pos.clientY /= e.touches.length;
+			}else{
+				return this.lastMousePos;
+			}
+		}else if(!this.isTouchGame){
+			pos.clientX = e.clientX;
+			pos.clientY = e.clientY;
+		}
+		this.lastMousePos = pos;
+		return pos;
+	}
+	
 	_fireEvent(type){
 		var event = new CustomEvent(type, {detail: this, cancelable: true, bubbles: true});
 		return this.canvas.dispatchEvent(event);
@@ -60,11 +115,11 @@ class Minesweeper{
 	_onmousedown(e){
 		this.move_over_cell = this._getCellAt(e) || null;
 		this.mouse_down_time = new Date().getTime();
-		if(this.move_over_cell) this.emoji = 'nervous';
+		if(this.move_over_cell && !this.gameover) this.emoji = 'nervous';
 	}
 	
 	_onmouseup(e){
-		this.emoji = 'neutral';
+		if(!this.gameover) this.emoji = 'neutral';
 		if(this._getCellAt(e) === this.move_over_cell){
 			if(this.move_over_cell !== 'emoji' && this.gameover) return;
 			if(this.move_over_cell.isClicked) return;
@@ -75,7 +130,7 @@ class Minesweeper{
 			var md_time = new Date().getTime() - this.mouse_down_time;
 			if(this.move_over_cell === 'emoji'){
 				this.move_over_cell = null;
-				this._resetGame();
+				this.resetGame();
 			}else if(md_time > 499){
 				this.move_over_cell.isFlagged = !this.move_over_cell.isFlagged;
 			}else{
@@ -123,7 +178,7 @@ class Minesweeper{
 		if(cell.isMine){
 			this.gameover = true;
 			this.end_time = new Date().getTime();
-			this._fireEvent('ms-gameover');
+			this._fireEvent('ms-game-end');
 			this.emoji = 'angry';
 		}else{
 			this.emoji = 'neutral';
@@ -145,7 +200,7 @@ class Minesweeper{
 						if(!this.grid[y][x].isClicked) this.grid[y][x].isFlagged = true;
 					}
 				}
-				this._fireEvent('ms-gameover');
+				this._fireEvent('ms-game-end');
 			}
 		}
 	}
@@ -177,19 +232,7 @@ class Minesweeper{
 	}
 	
 	_drawTimer(){
-		var end_time = this.end_time || new Date().getTime();
-		var seconds = this.start_time ? 
-			Math.floor(end_time-this.start_time) : 
-			99999999;
-		seconds = Math.floor(seconds/1000);
-		var minutes = Math.floor(seconds / 60);
-		seconds -= minutes * 60;
-		seconds = (''+seconds).padStart(2, '0');
-		minutes = (''+minutes).padStart(2, '0');
-		if(minutes.length > 2){
-			minutes = '99';
-			seconds = '99';
-		}
+		var [minutes, seconds] = this.getGameTime().split(':');
 		minutes = minutes.split('').map(d=>'d'+d);
 		seconds = seconds.split('').map(d=>'d'+d);
 		var chars = [...minutes, 'colon', ...seconds];
@@ -319,9 +362,10 @@ class Minesweeper{
 	}
 	
 	_canvasMousePos(e) {
+		var {clientX, clientY} = this._getClientPos(e);
 		var rect = this.canvas.getBoundingClientRect();
-		var x = e.clientX - rect.left;
-		var y = e.clientY - rect.top;
+		var x = clientX - rect.left;
+		var y = clientY - rect.top;
 		var wfactor = this.canvas.width / rect.width;
 		var hfactor = this.canvas.height / rect.height;
 		x = x*wfactor;
