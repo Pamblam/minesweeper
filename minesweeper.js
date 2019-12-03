@@ -1,7 +1,7 @@
 
 class Minesweeper{
 	
-	constructor(canvas, width, height, mine_count){
+	constructor(canvas, width, height, mine_count, path='./icons'){
 		this.canvas = canvas;
 		this.ctx = canvas.getContext('2d');
 		this.mine_count = +mine_count;
@@ -16,6 +16,7 @@ class Minesweeper{
 		this.emoji = 'neutral';
 		this.isTouchGame = false;
 		
+		this.icons_path = path;
 		this.lastMousePos = null;
 		this.move_over_cell = null;
 		this.mouse_down_time = null;
@@ -31,7 +32,7 @@ class Minesweeper{
 		
 		(async ()=>{
 			this._touchFixes();
-			await MinesweeperBlock.loadImages();
+			await MinesweeperBlock.loadImages(this.icons_path);
 			this._populateGrid();
 			this._UILoop();
 		})();
